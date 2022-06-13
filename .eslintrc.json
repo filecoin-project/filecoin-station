@@ -18,7 +18,7 @@
   ],
   "overrides": [
     {
-      "files": ["build/**/*.js", "main/**/*.js", "test/**/*.js", "*.js"],
+      "files": ["build/**/*.cjs", "main/**/*.cjs"],
       "rules": {
         "@typescript-eslint/no-var-requires": "off"
       }

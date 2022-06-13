@@ -16,7 +16,7 @@ extraResources:
 
 asarUnpack: 'main/**/scripts/**/*'
 
-afterSign: 'build/notarize-macos.js'
+afterSign: 'build/notarize-macos.cjs'
 
 mac:
   category: public.app-category.utilities

@@ -1,18 +1,19 @@
+'use strict'
+
+// This is the entry point for the Electron main process.
+// We must use CommonJS format because Electron does not support ES Modules in the main process yet:
+// https://github.com/electron/electron/issues/21457
+
 const { app, dialog } = require('electron')
 const log = require('electron-log')
 const serve = require('electron-serve')
 const path = require('node:path')
 
-const setupUI = require('./ui')
-const setupTray = require('./tray')
-const setupUpdater = require('./updater')
-const setupSaturnNode = require('./saturn-node')
-
 const inTest = (process.env.NODE_ENV === 'test')
 
 function handleError (/** @type {any} */ err) {
   log.error(err)
-  dialog.showErrorBox('Error occured', err.stack ?? err.message ?? err)
+  dialog.showErrorBox('Error occurred', err.stack ?? err.message ?? err)
 }
 
 // ensures there are no unhandled errors during initial dev
@@ -37,24 +38,9 @@ const ctx = {
   loadWebUIFromDist: serve({ directory: path.resolve(__dirname, '../renderer/dist') })
 }
 
-async function run () {
-  try {
-    await app.whenReady()
-  } catch (e) {
-    handleError(e)
-    app.exit(1)
-  }
-
-  try {
-    // Interface
-    await setupTray(ctx)
-    await setupUI(ctx)
-    await setupUpdater(ctx)
-
-    await setupSaturnNode(ctx)
-  } catch (e) {
-    handleError(e)
-  }
-}
-
-run()
+import('./main.js')
+  .then(main => main.start(ctx))
+  .catch(err => {
+    handleError(err)
+    process.exit(1)
+  })

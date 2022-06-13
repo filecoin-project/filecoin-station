@@ -1,7 +1,11 @@
-const { BrowserWindow, app, dialog, Notification } = require('electron')
-const { autoUpdater } = require('electron-updater')
-const fs = require('fs')
-const log = require('electron-log').scope('updater')
+import ElectronLog from 'electron-log'
+import autoUpdaterPkg from 'electron-updater'
+import fs from 'fs'
+import { app, autoUpdater as builtinAutoUpdater, BrowserWindow, dialog, Notification } from './electron.cjs'
+
+const { autoUpdater } = autoUpdaterPkg
+
+const log = ElectronLog.scope('updater')
 
 // must be global to avoid gc
 let updateNotification = null
@@ -52,10 +56,10 @@ function setup (/** @type {import('./typings').Context} */ _ctx) {
   }
   // built-in updater != electron-updater
   // https://github.com/electron-userland/electron-builder/pull/6395
-  require('electron').autoUpdater.on('before-quit-for-update', beforeQuitCleanup)
+  builtinAutoUpdater.on('before-quit-for-update', beforeQuitCleanup)
 }
 
-module.exports = async function (/** @type {import('./typings').Context} */ ctx) {
+export async function setupUpdater (/** @type {import('./typings').Context} */ ctx) {
   if (['test', 'development'].includes(process.env.NODE_ENV ?? '')) {
     // skip init in dev if we are not debugging updater
     if (!fs.existsSync('dev-app-update.yml')) return

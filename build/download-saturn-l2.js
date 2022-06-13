@@ -1,64 +1,57 @@
 #!/usr/bin/env -S node
 
-'use strict'
+import gunzip from 'gunzip-maybe'
+import { mkdir } from 'node:fs/promises'
+import path from 'node:path'
+import { pipeline } from 'node:stream/promises'
+import { fileURLToPath } from 'node:url'
+import tar from 'tar-fs'
+import { request } from 'undici'
 
 const SATURN_DIST_TAG = 'v0.0.2'
-
-const { mkdir } = require('node:fs/promises')
-const path = require('node:path')
-const tar = require('tar-fs')
-const gunzip = require('gunzip-maybe')
-const { request } = require('undici')
-const { pipeline } = require('node:stream/promises')
 
 const githubToken = process.env.GITHUB_TOKEN
 const authorization = githubToken ? `Bearer ${githubToken}` : undefined
 
-main().catch(err => {
-  console.error('Unhandled error:', err)
-  process.exit(1)
-})
+console.log('Fetching release metadata for %s', SATURN_DIST_TAG)
+console.log('GitHub client:', authorization ? 'authorized' : 'anonymous')
 
-async function main () {
-  console.log('Fetching release metadata for %s', SATURN_DIST_TAG)
-  console.log('GitHub client:', authorization ? 'authorized' : 'anonymous')
+const { assets } = await fetchReleaseMetadata()
 
-  const { assets } = await fetchReleaseMetadata()
+const dirname = path.dirname(fileURLToPath(import.meta.url))
+const outDir = path.resolve(dirname, 'saturn')
+await mkdir(outDir, { recursive: true })
 
-  const outDir = path.resolve(__dirname, 'saturn')
-  await mkdir(outDir, { recursive: true })
+await Promise.all(
+  assets
+    .map(async ({ name, browser_download_url: url }) => {
+      const match = name.match(/^saturn-l2_\d+\.\d+\.\d+_([A-Za-z0-9]+)_([A-Za-z0-9_]+)\.tar\.gz$/)
+      const platform = match && getPlatform(match[1])
+      if (!match || platform !== process.platform) {
+        console.log(' ⨯ skipping %s', name)
+        return
+      }
 
-  await Promise.all(
-    assets
-      .map(async ({ name, browser_download_url: url }) => {
-        const match = name.match(/^saturn-l2_\d+\.\d+\.\d+_([A-Za-z0-9]+)_([A-Za-z0-9_]+)\.tar\.gz$/)
-        const platform = match && getPlatform(match[1])
-        if (!match || platform !== process.platform) {
-          console.log(' ⨯ skipping %s', name)
-          return
-        }
-
-        const outName = `l2node-${platform}-${getArch(match[2])}`
-        console.log(' ⇣ downloading %s', outName)
-        const res = await request(url, {
-          headers: { authorization },
-          maxRedirections: 5
-        })
-
-        if (res.statusCode >= 300) {
-          throw new Error(
-            `Cannot fetch saturn-l2 binary ${name}: ${res.statusCode}\n${await res.body.text()}`
-          )
-        }
-
-        const outFile = path.join(outDir, outName)
-        await pipeline(res.body, gunzip(), tar.extract(outFile))
-        console.log(' ✓ %s', outFile)
+      const outName = `l2node-${platform}-${getArch(match[2])}`
+      console.log(' ⇣ downloading %s', outName)
+      const res = await request(url, {
+        headers: { authorization },
+        maxRedirections: 5
       })
-  )
 
-  console.log('✨ DONE ✨')
-}
+      if (res.statusCode >= 300) {
+        throw new Error(
+            `Cannot fetch saturn-l2 binary ${name}: ${res.statusCode}\n${await res.body.text()}`
+        )
+      }
+
+      const outFile = path.join(outDir, outName)
+      await pipeline(res.body, gunzip(), tar.extract(outFile))
+      console.log(' ✓ %s', outFile)
+    })
+)
+
+console.log('✨ DONE ✨')
 
 /**
  * @returns {Promise<{

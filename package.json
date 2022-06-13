@@ -4,7 +4,8 @@
   "private": true,
   "version": "0.0.7",
   "description": "Desktop application for Filecoin Retrieval Markets",
-  "main": "main/index.js",
+  "type": "module",
+  "main": "main/index.cjs",
   "scripts": {
     "start": "cross-env NODE_ENV=development electron .",
     "lint": "eslint . && tsc -p tsconfig.json && tsc -p renderer/tsconfig.json",

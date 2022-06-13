@@ -1,8 +1,10 @@
-const { _electron: electron } = require('playwright')
-const { test, expect } = require('@playwright/test')
-const path = require('path')
+import { expect, test } from '@playwright/test'
+import { fileURLToPath } from 'node:url'
+import path from 'path'
+import { _electron as electron } from 'playwright'
+import tmp from 'tmp'
 
-const tmp = require('tmp')
+const dirname = path.dirname(fileURLToPath(import.meta.url))
 
 if (process.env.CI === 'true') test.setTimeout(120000) // slow ci
 
@@ -13,7 +15,7 @@ test.describe.serial('Application launch', async () => {
     // Launch Electron app against sandbox fake HOME dir
     const userData = tmp.dirSync({ prefix: 'tmp_home_', unsafeCleanup: true }).name
     const electronApp = await electron.launch({
-      args: [path.join(__dirname, '..', '..', 'main', 'index.js')],
+      args: [path.join(dirname, '..', '..', 'main', 'index.cjs')],
       env: {
         ...process.env,
         NODE_ENV: 'test',

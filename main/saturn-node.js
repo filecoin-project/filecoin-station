@@ -1,10 +1,11 @@
-'use strict'
+import fs from 'node:fs/promises'
+import { fileURLToPath } from 'node:url'
+import path from 'path'
+import { app } from './electron.cjs'
 
-const { app } = require('electron')
-const path = require('path')
-const fs = require('node:fs/promises')
+const dirname = path.dirname(fileURLToPath(import.meta.url))
 
-module.exports = async function setupSaturnNode (/** @type {import('./typings').Context} */ _ctx) {
+export async function setupSaturnNode (/** @type {import('./typings').Context} */ _ctx) {
   const saturnBinaryPath = getSaturnBinaryPath()
   console.log('Using Saturn L2 Node binary: %s', saturnBinaryPath)
 
@@ -20,5 +21,5 @@ function getSaturnBinaryPath () {
   const name = 'saturn-l2' + (process.platform === 'win32' ? '.exe' : '')
   return app.isPackaged
     ? path.resolve(process.resourcesPath, 'saturn-l2-node', name)
-    : path.resolve(__dirname, '..', 'build', 'saturn', `l2node-${process.platform}-${process.arch}`, name)
+    : path.resolve(dirname, '..', 'build', 'saturn', `l2node-${process.platform}-${process.arch}`, name)
 }

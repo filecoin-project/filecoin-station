@@ -1,8 +1,10 @@
-const { defineConfig } = require('vite')
-const react = require('@vitejs/plugin-react').default
-const path = require('node:path')
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const rendererDir = path.resolve(__dirname, 'renderer')
+const dirname = path.dirname(fileURLToPath(import.meta.url))
+const rendererDir = path.resolve(dirname, 'renderer')
 
 // https://vitejs.dev/config/
 export default defineConfig({

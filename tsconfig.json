@@ -8,7 +8,7 @@
     "checkJs": true,
     "lib": ["es2021"],
     "target": "es2021",
-    "module": "commonjs",
+    "module": "ES2022",
     "moduleResolution": "node",
 
     "resolveJsonModule": true,
@@ -22,6 +22,6 @@
     "main/**/*.js",
     "build/**/*.js",
     "test/**/*.js",
-    "vite.config.mjs",
+    "vite.config.mjs", "main/main.js", "main/index.js", "build/notarize-macos.cjs", "main/electron.cjs",
   ]
 }

@@ -1,10 +1,14 @@
-const os = require('os')
-const packageJson = require('../package.json')
+import fs from 'node:fs/promises'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import os from 'os'
 
-module.exports = Object.freeze({
-  IS_MAC: os.platform() === 'darwin',
-  IS_WIN: os.platform() === 'win32',
-  IS_APPIMAGE: typeof process.env.APPIMAGE !== 'undefined',
-  STATION_VERSION: packageJson.version,
-  ELECTRON_VERSION: process.versions.electron
-})
+const dirname = path.dirname(fileURLToPath(import.meta.url))
+const packageFile = path.resolve(dirname, '..', 'package.json')
+const packageJson = JSON.parse(await fs.readFile(packageFile, { encoding: 'utf-8' }))
+
+export const IS_MAC = os.platform() === 'darwin'
+export const IS_WIN = os.platform() === 'win32'
+export const IS_APPIMAGE = typeof process.env.APPIMAGE !== 'undefined'
+export const STATION_VERSION = packageJson.version
+export const ELECTRON_VERSION = process.versions.electron

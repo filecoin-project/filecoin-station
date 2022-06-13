@@ -1,11 +1,15 @@
-const { BrowserWindow, app, screen } = require('electron')
-const store = require('./store')
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { app, BrowserWindow, screen } from './electron.cjs'
+import { store } from './store.js'
+
+const dirname = path.dirname(fileURLToPath(import.meta.url))
 
 /**
  * @param {import('./typings').Context} ctx
- * @returns {Promise<BrowserWindow>}
+ * @returns {Promise<import('electron').BrowserWindow>}
  */
-module.exports = async function (ctx) {
+export async function setupUI (ctx) {
   // Show docks only when UI is visible
   if (app.dock) app.dock.hide()
 
@@ -30,9 +34,10 @@ module.exports = async function (ctx) {
     ctx.loadWebUIFromDist(ui)
   } else {
     console.log('Starting Vite DEV server')
-    const { createServer } = require('vite')
+    // Import vite only in DEV mode, we are not bundling vite dependency in the production package
+    const { createServer } = await import('vite')
     devServer = await createServer({
-      configFile: require.resolve('../vite.config.js'),
+      configFile: path.resolve(dirname, '..', 'vite.config.js'),
       server: {
         port: 3000
       }
@@ -40,7 +45,13 @@ module.exports = async function (ctx) {
     await devServer.listen()
 
     console.log('Installing React developer tools')
-    const { default: installExtension, REACT_DEVELOPER_TOOLS } = require('electron-devtools-installer')
+
+    const pkg = await import('electron-devtools-installer')
+    const { REACT_DEVELOPER_TOOLS } = pkg
+    /** @type {typeof import('electron-devtools-installer').default} */
+    const installExtension = (/** @type {any} */ (pkg.default)).default
+    //                        ^^ this cast to `any` is a workaround for broken exports in the module
+
     await installExtension(REACT_DEVELOPER_TOOLS).then(
       name => console.log('Added extension:', name),
       error => console.error('Cannot install React developer tools:', error)
